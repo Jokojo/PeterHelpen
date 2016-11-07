@@ -1,0 +1,245 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
+
+public class UI : MonoBehaviour {
+	public GameObject thePrefab;
+    public List<GameObject> InstantiatedObjs = new List<GameObject>();
+
+    GameObject Dest;
+
+    public Texture2D cursorNormTexture;
+	public Texture2D cursorAtkTexture;
+	public CursorMode cursorMode = CursorMode.ForceSoftware;
+	public Vector2 hotSpot = Vector2.zero;
+    static public Vector3 wordPos;
+    Vector3 currMousePos;
+    Vector3 InitialMousePos;
+    public RectTransform SelectionBox;
+    RaycastHit[] hits;
+    Ray rayInit;
+    Ray rayCurr;
+    RaycastHit InitHit;
+    RaycastHit CurrHit;
+    Vector3 Dif;
+    Vector3 Scale;
+    public Building SelectedBuilding;
+    public List<Unit> Selected = new List<Unit>();
+    public List<BuildButton> UnitButton = new List<BuildButton>();
+    public GameObject BuildingMenu;
+    
+    [System.Serializable]
+    public struct BuildButton {
+        public Text QueueNumber;
+        public Button Button;
+    }
+
+    public static bool MouseOnUI {
+        get {
+            return UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+        }
+    }
+
+    // Use this for initialization
+    void Start () {
+		
+	}
+	
+	// Update is called once per frame
+
+	void Update() {
+		Vector3 mousePos = new Vector3 (Input.mousePosition.x, Input.mousePosition.y, 0f);
+        
+		Ray ray = Camera.main.ScreenPointToRay (mousePos);
+		RaycastHit hit;
+        if (SelectedBuilding != null) {
+            UnitButton[0].QueueNumber.text = SelectedBuilding.Unit1Que.ToString();
+
+        }
+            
+            if (Input.GetMouseButtonDown(1))
+            {
+            if (InstantiatedObjs != null) {
+
+                foreach (GameObject Obj in InstantiatedObjs) {
+                    Destroy(Obj);
+                }
+                InstantiatedObjs.Clear();
+            }
+            if (Physics.Raycast(ray, out hit, 1000f) && hit.transform.tag == "Terrain")
+            {
+                for (int i = 0; i < Selected.Count; i++)
+                {
+                    wordPos = hit.point + Vector3.right*i*5;
+                    GameObject Temp = (GameObject)Instantiate(thePrefab, wordPos, Quaternion.identity);
+                    InstantiatedObjs.Add(Temp);
+                    Selected[i].Dest = InstantiatedObjs[i];
+                }
+                    
+
+                    
+            }
+        }
+
+
+
+
+        if (Physics.Raycast (ray, out hit, 1000f) && hit.transform.tag == "Enemy") {
+			Cursor.SetCursor (cursorAtkTexture, hotSpot, cursorMode);
+
+		} else {
+			Cursor.SetCursor (cursorNormTexture, hotSpot, cursorMode);
+		}
+        if (Input.GetMouseButtonDown(0)) {
+            InitialMousePos = mousePos;
+            rayInit = Camera.main.ScreenPointToRay(mousePos);
+            Physics.Raycast(rayInit, out InitHit, Mathf.Infinity);
+            SelectionBox.anchoredPosition = InitialMousePos;
+        }
+        if (Input.GetMouseButton(0)) {
+            currMousePos = mousePos;
+            rayCurr = Camera.main.ScreenPointToRay(mousePos);
+            Physics.Raycast(rayCurr, out CurrHit, Mathf.Infinity);
+            
+            Vector3 difference = currMousePos - InitialMousePos;
+            Vector3 StartPoint = InitialMousePos;
+            if (difference.x < 0)
+            {
+                StartPoint.x = currMousePos.x;
+                difference.x = -difference.x;
+            }
+            if (difference.y < 0)
+            {
+                StartPoint.y = currMousePos.y;
+                difference.y = -difference.y;
+            }
+            SelectionBox.anchoredPosition = StartPoint;
+            SelectionBox.sizeDelta = difference;
+
+            
+            
+            Dif = InitHit.point + ((CurrHit.point - InitHit.point)/2);
+            Scale = InitHit.point - CurrHit.point;
+            if (Scale.x < 0)
+            {
+                StartPoint.x = currMousePos.x;
+                Scale.x = -Scale.x;
+            }
+            if (Scale.y < 0)
+            {
+                StartPoint.y = currMousePos.y;
+                Scale.y = -Scale.y;
+            }
+            if (Scale.z < 0)
+            {
+                StartPoint.z = currMousePos.z;
+                Scale.z = -Scale.z;
+            }
+            hits = Physics.BoxCastAll(Dif, Scale + new Vector3(0, 10, 0), new Vector3(30, 315, 0));
+            
+
+        }
+        if (Input.GetMouseButtonUp(0)) {
+
+            if (hits != null) { 
+                foreach (RaycastHit i in hits)
+                {
+
+                    if (i.transform.tag == "PUnit")
+                    {
+                        Selected.Add(i.transform.gameObject.GetComponentInParent<Unit>());
+                    }
+                }
+
+                foreach (Unit i in Selected)
+                {
+                    i.selected = true;
+
+                }
+            }
+
+            InitialMousePos = Vector2.zero;
+            SelectionBox.anchoredPosition = Vector2.zero;
+            SelectionBox.sizeDelta = Vector2.zero;
+
+            }
+          
+        
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            
+            if (Physics.Raycast(ray, out hit, 1000f) && hit.transform.tag == "PUnit")
+            {
+                
+                if (hit.transform.GetComponentInParent<Unit>().selected == false)
+                {
+                    
+                    hit.transform.GetComponentInParent<Unit>().selected = true;
+
+                }
+                else {
+                    hit.transform.GetComponentInParent<Unit>().selected = false;
+                }
+            }
+            if (Physics.Raycast(ray, out hit, 1000f) && hit.transform.tag == "Terrain")
+            {
+                foreach (Unit i in Selected) {
+                    i.selected = false;
+                }
+                Selected.Clear();
+                if (!MouseOnUI) {
+                    SelectedBuilding = null;
+                    BuildingMenu.SetActive(false);
+                }
+
+            }
+            if (Physics.Raycast(ray, out hit, 1000f) && hit.transform.tag == "Building")
+            {
+                SelectedBuilding = hit.transform.GetComponent<Building>();
+                BuildingMenu.SetActive(true);
+
+            }
+        }
+        
+
+
+
+    }
+
+	void OnMouseEnter() {
+		
+	}
+	void OnMouseExit() {
+		
+	}
+    public void AddToQueue(int UnitType) {
+        if (UnitType == 0)
+            SelectedBuilding.Unit1Que += 1;
+
+        if (UnitType == 1)
+            SelectedBuilding.Unit2Que += 1;
+
+        if (UnitType == 2)
+            SelectedBuilding.Unit3Que += 1;
+
+   
+
+    }
+    public void ExitMenu(GameObject Menu)
+    {
+        Menu.SetActive(false);
+        
+    }
+
+
+}
+
+
+
+
+
