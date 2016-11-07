@@ -1,0 +1,41 @@
+using UnityEngine;
+using System.Collections;
+
+public class CameraMovement : MonoBehaviour {
+	public float speed;
+	float PosX;
+	float PosY;
+	float MousePosX;
+	float MousePosY;
+	int scrollDistance = 5;
+	float scrollSpeed = 10;
+	// Use this for initialization
+	void Start () {
+
+	}
+
+	// Update is called once per frame
+	void Update () {
+		MousePosX = Input.mousePosition.x;
+		MousePosY = Input.mousePosition.y;
+
+		PosX = Input.GetAxis("Horizontal");
+		PosY = Input.GetAxis("Vertical");
+
+		transform.Translate (PosX - PosY, 0 ,PosY + PosX );
+
+		if (MousePosX < scrollDistance) {
+			transform.Translate (-1, 0, -1);
+		}
+		if (MousePosX >= Screen.width - scrollDistance) {
+			transform.Translate (1, 0, 1);
+		}
+		if (MousePosY < scrollDistance) {
+			transform.Translate (1, 0, -1);
+		}
+		if (MousePosY >= Screen.height - scrollDistance) {
+			transform.Translate (-1, 0, 1);
+		}
+
+	}
+}
