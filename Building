@@ -1,0 +1,63 @@
+
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+
+public class Building : MonoBehaviour {
+    public bool UnitsInQue;
+    public int buildSpeed;
+    public int Unit1Que;
+    public int Unit2Que;
+    public int Unit3Que;
+    public Image QueueBar; 
+    public GameObject []Units;
+    public float timer = 0;
+
+    //  Use this for initialization
+    void Start () {
+	
+	}
+	
+	// Update is called once per frame
+	void Update () {
+        BuildUnits();
+	}
+    void BuildUnits()
+    {
+        QueueBar.fillAmount = timer / 100;
+        if (Unit1Que + Unit2Que + Unit3Que > 0) {
+            if (Unit1Que > 0) {
+                
+                timer += buildSpeed;
+                if (timer >= 100) {
+                    timer = 0f;
+                    Unit1Que -= 1;
+                    Instantiate(Units[0], transform.position, transform.rotation);
+                }
+            }
+            if (Unit2Que > 0)
+            {
+
+                timer += buildSpeed;
+                if (timer > 100)
+                {
+                    timer = 0f;
+                    Unit2Que -= 1;
+                    Instantiate(Units[1], transform.position, transform.rotation);
+                }
+            }
+            if (Unit3Que > 0)
+            {
+
+                timer += buildSpeed;
+                if (timer > 100)
+                {
+                    timer = 0f;
+                    Unit3Que -= 1;
+                    Instantiate(Units[2], transform.position, transform.rotation);
+                }
+            }
+        }
+
+    }
+}
