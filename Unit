@@ -1,0 +1,225 @@
+
+public class Unit : MonoBehaviour {
+    public int health;
+	public Vector3 destination;
+	Transform target;
+	NavMeshAgent agent;
+	private List<GameObject> enemiesInRange = new List<GameObject>();
+	public GameObject TurretTank;
+    public bool selected;
+    static public bool AllSelection = false;
+    public GameObject SelectionCube;
+    public GameObject thePrefab;
+    GameObject InstantiatedObj;
+    public GameObject Dest;
+    public Material Highlighted;
+    public Material NonHighlighted;
+    public GameObject TankBullet;
+    public Transform ExitHole;
+    public float fireRate = 1f;
+    public float counter;
+    public bool Selectable;
+
+	Vector3 mousePos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0f);
+	Ray ray;
+	RaycastHit hit;
+
+    public Renderer[] tank;
+    // Use this for initialization
+    public virtual void Start () {
+		agent = GetComponent<NavMeshAgent>();
+		destination = agent.destination;
+        counter = fireRate;
+        
+        
+        
+	}
+	
+	// Update is called once per frame
+	public virtual void Update () {
+		Turret ();
+        
+        Vector3 mousePos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0f);
+        ray = Camera.main.ScreenPointToRay(mousePos);
+        RaycastHit hit;
+
+        if (Selectable) {
+
+            if (Physics.Raycast(ray, out hit, 1000f) && hit.transform.tag == "PUnit" && hit.transform.parent.gameObject == this.gameObject)
+            {
+                SwitchMaterial(Highlighted);
+            }
+            else {
+                SwitchMaterial(NonHighlighted);
+            }
+
+            if (AllSelection && selected)
+        
+            {
+                selected = false;
+                AllSelection = false;
+            }
+            if (selected)
+            {
+
+                SelectionCube.SetActive(true);
+                
+            }
+            else {
+                SelectionCube.SetActive(false);
+            }
+
+            if (Dest != null)
+            {
+                if (Vector3.Distance(destination, Dest.transform.position) > 1.0f)
+                {
+                    //destination = GameObject.FindGameObjectWithTag ("Target").transform.position;
+                    destination = Dest.transform.position;
+                    agent.destination = destination;
+                }
+            }
+            else {
+                agent.destination = transform.position;
+
+            }
+
+        }
+
+	
+	}
+	void Turret(){
+		if (enemiesInRange.Count >= 0)
+		{
+			float speed = 70f;
+			float step = speed * Time.deltaTime;
+			GameObject closestEnemy = null;
+			foreach (GameObject enemy in enemiesInRange)
+			{
+				
+				if (enemy != null)
+				{
+					float distance = enemy.GetComponent<NavMeshAgent>().remainingDistance;
+					if (closestEnemy == null || closestEnemy.GetComponent<NavMeshAgent>().remainingDistance > distance)
+					{
+						closestEnemy = enemy;
+						Vector3 TargetDir = closestEnemy.transform.position - transform.position;
+						TurretTank.transform.rotation = Quaternion.RotateTowards (TurretTank.transform.rotation, Quaternion.LookRotation(TargetDir), step);
+                        if (Quaternion.RotateTowards(TurretTank.transform.rotation, Quaternion.LookRotation(TargetDir), step) == Quaternion.LookRotation(TargetDir)) {
+                            
+                            counter += Time.deltaTime;
+                            if (counter > fireRate)
+                            {
+                                Instantiate(TankBullet, ExitHole.position, ExitHole.rotation);
+                                counter = 0;
+                                
+
+                            }
+                            
+
+                        }
+//						TurretTank.transform.LookAt(enemy.gameObject.transform);
+					}
+				}
+			}
+			if (closestEnemy != null)
+			{
+				
+				Vector3 TargetDir = closestEnemy.transform.position - transform.position;
+				TurretTank.transform.rotation = Quaternion.RotateTowards (TurretTank.transform.rotation, Quaternion.LookRotation(TargetDir), step);
+                //				TurretTank.transform.LookAt(closestEnemy.gameObject.transform);
+
+
+
+            }
+			else {
+					TurretTank.transform.rotation = Quaternion.RotateTowards(TurretTank.transform.rotation, transform.rotation, step);
+			}
+		}
+	}
+	void OnTriggerEnter(Collider col)
+	{
+		
+		if (col.gameObject.tag == "Enemy")
+		{
+			enemiesInRange.Add(col.gameObject);
+		
+
+		}
+	}
+	void OnTriggerExit(Collider col)
+	{
+		if (col.gameObject.tag == "Enemy")
+		{
+			enemiesInRange.Remove(col.gameObject);
+
+		}
+	}
+    public void SwitchMaterial(Material NewMat) {
+        tank =  GetComponentsInChildren<Renderer>();
+
+        foreach (Renderer r in tank) {
+            if (r.gameObject != SelectionCube) {
+
+                Material[] mats = new Material[r.materials.Length];
+
+                for (int j = 0; j < r.materials.Length; j++) {
+                    mats[j] = NewMat;
+                }
+                r.materials = mats;
+            }
+        }
+
+    }
+    void OnMouseEnter() {
+        SwitchMaterial(Highlighted);
+    }
+    void OnMouseExit()
+    {
+        SwitchMaterial(Highlighted);
+    }
+    public void Movement() {
+        if (Dest != null)
+        {
+			if (Selectable) {
+				
+				if (Physics.Raycast(ray, out hit, 1000f) && hit.transform.tag == "PUnit" && hit.transform.parent.gameObject == this.gameObject)
+				{
+					SwitchMaterial(Highlighted);
+				}
+				else {
+					SwitchMaterial(NonHighlighted);
+				}
+
+				if (AllSelection && selected)
+
+				{
+					selected = false;
+					AllSelection = false;
+				}
+				if (selected)
+				{
+
+					SelectionCube.SetActive(true);
+
+				}
+				else {
+					SelectionCube.SetActive(false);
+				}
+
+				if (Dest != null)
+				{
+					if (Vector3.Distance(destination, Dest.transform.position) > 1.0f)
+					{
+						//destination = GameObject.FindGameObjectWithTag ("Target").transform.position;
+						destination = Dest.transform.position;
+						agent.destination = destination;
+					}
+				}
+				else {
+					agent.destination = transform.position;
+
+				}
+
+			}
+		}}
+}			
