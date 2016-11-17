@@ -11,6 +11,10 @@ public class UI : MonoBehaviour {
     public List<GameObject> InstantiatedObjs = new List<GameObject>();
 
     GameObject Dest;
+	public static int Metal;
+	public static int Power;
+	public Text MetalText;
+	public Text PowerText;
 
     public Texture2D cursorNormTexture;
 	public Texture2D cursorAtkTexture;
@@ -31,6 +35,8 @@ public class UI : MonoBehaviour {
     public List<Unit> Selected = new List<Unit>();
     public List<BuildButton> UnitButton = new List<BuildButton>();
     public GameObject BuildingMenu;
+	public GameObject[] BuildableBuildings = new GameObject[2]; 
+	public GameObject PlaceBuilding;
     
     [System.Serializable]
     public struct BuildButton {
@@ -52,14 +58,23 @@ public class UI : MonoBehaviour {
 	// Update is called once per frame
 
 	void Update() {
+		MetalText.text = Metal.ToString();
+		PowerText.text = Power.ToString();
+		if (PlaceBuilding != null && !MouseOnUI) {
+			BuildingPlacement ();
+		}
+
 		Vector3 mousePos = new Vector3 (Input.mousePosition.x, Input.mousePosition.y, 0f);
         
 		Ray ray = Camera.main.ScreenPointToRay (mousePos);
 		RaycastHit hit;
         if (SelectedBuilding != null) {
             UnitButton[0].QueueNumber.text = SelectedBuilding.Unit1Que.ToString();
+			UnitButton[1].QueueNumber.text = SelectedBuilding.Unit2Que.ToString();
+			UnitButton[2].QueueNumber.text = SelectedBuilding.Unit3Que.ToString();
 
         }
+
             
             if (Input.GetMouseButtonDown(1))
             {
@@ -200,8 +215,10 @@ public class UI : MonoBehaviour {
             }
             if (Physics.Raycast(ray, out hit, 1000f) && hit.transform.tag == "Building")
             {
-                SelectedBuilding = hit.transform.GetComponent<Building>();
-                BuildingMenu.SetActive(true);
+				if (!hit.transform.GetComponent<Building> ().PowerBuilding) {
+					SelectedBuilding = hit.transform.GetComponent<Building>();
+					BuildingMenu.SetActive(true);
+				}
 
             }
         }
@@ -230,14 +247,43 @@ public class UI : MonoBehaviour {
    
 
     }
+
+	public void OpenMenu(GameObject Menu)
+	{
+		Menu.SetActive(true);
+
+	}
     public void ExitMenu(GameObject Menu)
     {
         Menu.SetActive(false);
         
     }
+	public void SelectBuilding(int buildingnum){
+		if(buildingnum < 3)
+		PlaceBuilding = BuildableBuildings [buildingnum];
+
+		if (buildingnum == 3) {
+			PlaceBuilding = null;
+		}
+	}
+	public void BuildingPlacement(){
+		Vector3 mousePos = new Vector3 (Input.mousePosition.x, Input.mousePosition.y, 0f);
+
+		Ray ray = Camera.main.ScreenPointToRay (mousePos);
+		RaycastHit hit;
+
+		if (Input.GetMouseButtonDown(0)) {
+			if (Physics.Raycast (ray, out hit, 1000f) && hit.transform.tag == "Terrain") {
+				Instantiate(PlaceBuilding, hit.point + new Vector3(0,0.4f,0), Quaternion.identity);
+				print ("hit");
+			}
+		}
+	}
 
 
 }
+
+
 
 
 
