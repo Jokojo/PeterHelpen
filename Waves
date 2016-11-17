@@ -1,0 +1,48 @@
+using UnityEngine;
+using System.Collections;
+
+public class SpawnWaves : MonoBehaviour {
+	public GameObject Lord;
+	float counter = 0f;
+	public float SpawnRate;
+	public float StartSpawnNumberLords;
+	public float SpawnNumberLords;
+	public GameObject StartButton;
+	public bool SpawningWaves = false;
+	static public int wave = 1;
+	public int wavecd = 2;
+
+	// Use this for initialization
+
+	void Start () {
+		SpawnNumberLords = StartSpawnNumberLords;
+	
+	}
+	
+	// Update is called once per frame
+	void Update () {
+		if (counter <= 0 && SpawnNumberLords > 0 && SpawningWaves == true) {
+			Instantiate (Lord,transform.position,transform.rotation);
+			counter = SpawnRate;
+			SpawnNumberLords -= 1;
+		}
+		if (wavecd == 0) {
+			wavecd = 2;
+			SpawnRate = SpawnRate * 0.50f;
+		}
+		if (SpawnNumberLords <= 0) {
+			SpawningWaves = false;
+			StartButton.SetActive(true);
+			StartSpawnNumberLords = StartSpawnNumberLords * 1.20f;
+			SpawnNumberLords = StartSpawnNumberLords;
+			wave += 1;
+		
+		}
+		counter -= Time.deltaTime;
+	
+	}
+	public void StartNewWave(){
+		SpawningWaves = true;
+		StartButton.SetActive(false);
+	}
+}
